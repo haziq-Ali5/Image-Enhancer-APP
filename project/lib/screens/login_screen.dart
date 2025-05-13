@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
+  final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -40,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: SingleChildScrollView(
                 child: Form(
+                  key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -55,6 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 40.0,
                       ),
                       TextFormField(
+                        controller: _emailController,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter Email';
@@ -85,6 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 25.0,
                       ),
                       TextFormField(
+                        controller: _passwordController,
                         obscureText: true,
                         obscuringCharacter: '*',
                         validator: (value) {
@@ -132,15 +135,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,),
             ElevatedButton(
               onPressed: () async {
-                try {
-                  await authProvider.login(
-                    _emailController.text,
-                    _passwordController.text,
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Login failed: $e')),
-                  );
+                if (_formKey.currentState!.validate()) {
+    try {
+      await authProvider.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      ); 
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed: $e')),
+      );
+    }
                 }
               },
               child: Text('Login'),

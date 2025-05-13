@@ -1,8 +1,8 @@
-// lib/screens/register_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:project/providers/auth_provider.dart';
 import 'package:project/widgets/custom.dart';
+
 class RegisterScreen extends StatefulWidget {
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
@@ -11,6 +11,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return CustomScarffold(
       child: Column(
         children: [
-          const Expanded(
-            flex: 1,
-            child: SizedBox(
-              height: 10,
-            ),
-          ),
+          const Expanded(flex: 1, child: SizedBox(height: 10)),
           Expanded(
             flex: 7,
             child: Container(
@@ -38,21 +34,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               child: SingleChildScrollView(
                 child: Form(
+                  key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        'Welcome back',
+                      const Text(
+                        'Register Account',
                         style: TextStyle(
                           fontSize: 30.0,
                           fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                          color: Colors.black,
                         ),
                       ),
-                      const SizedBox(
-                        height: 40.0,
-                      ),
+                      const SizedBox(height: 40.0),
                       TextFormField(
+                        controller: _emailController,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter Email';
@@ -62,27 +58,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         decoration: InputDecoration(
                           label: const Text('Email'),
                           hintText: 'Enter Email',
-                          hintStyle: const TextStyle(
-                            color: Colors.black26,
-                          ),
+                          hintStyle: const TextStyle(color: Colors.black26),
                           border: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black12, // Default border color
-                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black12, // Default border color
-                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
-                      const SizedBox(
-                        height: 25.0,
-                      ),
+                      const SizedBox(height: 25.0),
                       TextFormField(
+                        controller: _passwordController,
                         obscureText: true,
                         obscuringCharacter: '*',
                         validator: (value) {
@@ -94,61 +81,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         decoration: InputDecoration(
                           label: const Text('Password'),
                           hintText: 'Enter Password',
-                          hintStyle: const TextStyle(
-                            color: Colors.black26,
-                          ),
+                          hintStyle: const TextStyle(color: Colors.black26),
                           border: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black12, // Default border color
-                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.black12, // Default border color
-                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
-                      const SizedBox(
-                        height: 25.0,
-                      ),
-                     Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            
-                          ),
-                      
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 25.0,
-                      ),
+                      const SizedBox(height: 25.0),
                       SizedBox(
-                        width: double.infinity,),      ElevatedButton(
-              onPressed: () async {
-                try {
-                  await authProvider.signUp(
-                    _emailController.text,
-                    _passwordController.text,
-                  );
-                  Navigator.pop(context);
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Registration failed: $e')),
-                  );
-                }
-              },
-              child: Text('Register'),
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()) {
+                              try {
+                                await authProvider.signUp(
+                                  _emailController.text.trim(),
+                                  _passwordController.text.trim(),
+                                );
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Registration successful! Please log in.'),
+                                  ),
+                                );
+
+                                // Delay a bit so user sees the snackbar, then go to login
+                                await Future.delayed(const Duration(seconds: 1));
+
+                                Navigator.pushReplacementNamed(context, '/login');
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Register failed: $e')),
+                                );
+                              }
+                            }
+                          },
+                          child: const Text('Register'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
-    ),
           ),
-            ),
         ],
       ),
     );
