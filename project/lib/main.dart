@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:project/providers/auth_provider.dart';
 import 'package:project/providers/job_provider.dart';
 import 'package:project/screens/home_screen.dart';
-import 'package:project/screens/login_screen.dart';
 import 'package:project/screens/result_screen.dart';
+import 'package:project/screens/welcome_screen.dart';
 import 'package:project/services/auth_service.dart';
 import 'package:project/services/api_service.dart';
 import 'package:project/services/storage_service.dart';
@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
               body: Center(child: CircularProgressIndicator()),
             );
           }
-          return authProvider.user != null ?  HomeScreen() :  LoginScreen();
+          return authProvider.user != null ?  HomeScreen() :  WelcomeScreen();
         },
       ),
       routes: {

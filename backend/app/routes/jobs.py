@@ -6,7 +6,9 @@ from .. import socketio
 from ..tasks.celery_worker import cpu_enhance_task  # Direct import
 
 jobs_bp = Blueprint('jobs', __name__)
-
+@jobs_bp.route('/health-check', methods=['GET'])
+def health_check():
+    return jsonify(status="OK"), 200
 @jobs_bp.route('/jobs', methods=['POST'])
 @jwt_required()
 def create_job():
