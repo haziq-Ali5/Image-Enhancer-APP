@@ -1,22 +1,36 @@
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 class ImagePickerButton extends StatelessWidget {
-  final Function(File) onImagePicked;
+  final void Function(File?, Uint8List) onImagePicked;
 
-  const ImagePickerButton({required this.onImagePicked});
+  const ImagePickerButton({Key? key, required this.onImagePicked}) : super(key: key);
+
+  Future<void> _pickImage(BuildContext context) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+
+      File? file;
+      if (!kIsWeb) {
+        file = File(picked.path);
+      }
+
+      onImagePicked(file, bytes);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () async {
-        final image = await ImagePicker().pickImage(source: ImageSource.gallery);
-        if (image != null) {
-          onImagePicked(File(image.path));
-        }
-      },
-      child: Icon(Icons.upload),
+    return ElevatedButton.icon(
+      icon: const Icon(Icons.image),
+      label: const Text('Upload Image'),
+      onPressed: () => _pickImage(context),
     );
   }
 }

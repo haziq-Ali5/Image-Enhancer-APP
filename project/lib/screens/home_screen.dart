@@ -1,14 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'dart:typed_data';
 import 'dart:io';
-
-import 'package:project/providers/job_provider.dart';
-import 'package:project/providers/auth_provider.dart';
-import 'package:project/screens/result_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:project/widgets/image_picker_button.dart';
-import 'package:project/widgets/status_indicator.dart';
-import 'package:project/constants/enums.dart';
-import 'package:project/widgets/custom.dart'; // Reuse CustomScaffold
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -16,112 +10,105 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  File? _selectedImage;
+  File? _selectedImageFile;
+  Uint8List? _selectedImageBytes;
+  bool _isLoading = false;
+
+  Future<void> _submitImage() async {
+    if (_selectedImageBytes == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      var uri = Uri.parse('http://localhost:5000/enhance');
+      var request = http.MultipartRequest('POST', uri);
+
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          _selectedImageBytes!,
+          filename: 'image.jpg',
+        ),
+      );
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image submitted successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit image')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final jobProvider = Provider.of<JobProvider>(context);
-
-    if (jobProvider.status == JobStatus.completed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ResultScreen(job: jobProvider.jobs.last),
-          ),
-        );
-      });
-    }
-
-    return CustomScarffold(
-      child: Column(
-        children: [
-          // Top space
-          const Expanded(flex: 1, child: SizedBox()),
-
-          // Main content container
-          Expanded(
-            flex: 7,
-            child: Container(
-              padding: const EdgeInsets.all(25.0),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(40.0),
-                  topRight: Radius.circular(40.0),
-                ),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Text(
-                      'Image Enhancer',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple,
-                      ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Image Enhancer')),
+      body: Scrollbar(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                Center(
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: 20),
-
-                    if (_selectedImage != null)
-                      Column(
-                        children: [
-                          Container(
-                            height: 200,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              image: DecorationImage(
-                                image: FileImage(_selectedImage!),
-                                fit: BoxFit.cover,
-                              ),
+                    child: _selectedImageBytes != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(
+                              _selectedImageBytes!,
+                              fit: BoxFit.contain,
+                              width: 300,
+                              height: 300,
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: () {
-                              jobProvider.uploadImage(_selectedImage!);
-                            },
-                            child: const Text('Submit for Enhancement'),
-                          ),
-                        ],
-                      )
-                    else
-                      Text(
-                        'Upload an image to enhance',
-                        style: TextStyle(color: Colors.black54),
-                      ),
-
-                    const SizedBox(height: 20),
-
-                    StatusIndicator(),
-                  ],
+                          )
+                        : const Center(child: Text('No image selected')),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                if (_selectedImageBytes != null)
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.send),
+                    label: _isLoading
+                        ? const CircularProgressIndicator()
+                        : const Text('Submit for Enhancement'),
+                    onPressed: _isLoading ? null : _submitImage,
+                  ),
+                const SizedBox(height: 30),
+                ImagePickerButton(
+                  onImagePicked: (file, bytes) {
+                    setState(() {
+                      _selectedImageFile = file;
+                      _selectedImageBytes = bytes;
+                    });
+                  },
+                ),
+              ],
             ),
           ),
-
-          // Upload image button
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ImagePickerButton(
-              onImagePicked: (File image) {
-                setState(() {
-                  _selectedImage = image;
-                });
-              },
-            ),
-          ),
-        ],
-      ),
-
-      // Logout button (floating corner)
-    floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            Provider.of<AuthProvider>(context, listen: false).signOut(),
-        child: const Icon(Icons.logout),
-        backgroundColor: Colors.purple,
+        ),
       ),
     );
   }

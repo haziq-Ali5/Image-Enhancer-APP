@@ -14,6 +14,25 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _hasShownSuccessSnackbar = false;
+
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+
+  // This prevents the snackbar from showing again if the widget rebuilds
+  if (!_hasShownSuccessSnackbar) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args['showSuccess'] == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful! Please log in.')),
+        );
+      });
+      _hasShownSuccessSnackbar = true;
+    }
+  }
+}
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -140,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await authProvider.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
-      ); 
+      ); Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: $e')),

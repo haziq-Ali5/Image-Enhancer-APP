@@ -108,10 +108,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                                 );
 
-                                // Delay a bit so user sees the snackbar, then go to login
-                                await Future.delayed(const Duration(seconds: 1));
 
-                                Navigator.pushReplacementNamed(context, '/login');
+                                Navigator.pushReplacementNamed(context, '/login',arguments: {'showSuccess': true},);
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Register failed: $e')),
